@@ -1,25 +1,29 @@
 require './minruby'
 
-def evaluate(tree)
+def evaluate(tree, env)
   case tree[0]
   when "lit"
     return tree[1]
   when "stmts"
-    return statements(tree)
+    return statements(tree.slice(1..), env)
+  when "var_assign"
+    env[tree[1]] = evaluate(tree[2], env)
+  when "var_ref"
+    return env[tree[1]]
   when "func_call"
     # あとの章で消される運命
-    return p(evaluate(tree[2]))
+    return p(evaluate(tree[2], env))
   else
-    left = evaluate(tree[1])
-    right = evaluate(tree[2])
+    left = evaluate(tree[1], env)
+    right = evaluate(tree[2], env)
     arithmetic(tree[0], left, right)
   end
 end
 
-def statements(tree)
+def statements(tree, env)
   last = nil
-  tree.slice(1..).each { |subtree|
-    last = evaluate(subtree)
+  tree.each { |subtree|
+    last = evaluate(subtree, env)
   }
   last
 end
@@ -65,11 +69,22 @@ def max_leaf(tree)
 end
 
 def main
-  # str = gets
   str = minruby_load
   tree = minruby_parse(str)
   p(tree)
-  evaluate(tree)
+
+  env = {}
+  evaluate(tree, env)
+  p(env)
 end
 
 main
+
+def test_ast
+  pp(minruby_parse("
+x = 1
+y = 2 * 3
+"))
+end
+
+# test_ast
