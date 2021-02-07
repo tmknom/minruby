@@ -25,6 +25,10 @@ class Evaluator
       return statements(tree.slice(1..))
     when "if"
       return if_statement(tree)
+    when "while"
+      return while_statement(tree)
+    when "while2"
+      return begin_while_statement(tree)
     when "var_assign"
       @env[tree[1]] = evaluate!(tree[2])
     when "var_ref"
@@ -45,6 +49,18 @@ class Evaluator
     else
       evaluate!(tree[3])
     end
+  end
+
+  def while_statement(tree)
+    while evaluate!(tree[1])
+      evaluate!(tree[2])
+    end
+  end
+
+  def begin_while_statement(tree)
+    begin
+      evaluate!(tree[2])
+    end while evaluate!(tree[1])
   end
 
   def statements(tree)
@@ -122,11 +138,11 @@ main
 
 def test_ast
   pp(minruby_parse("
-if 0 == 0
-  p(42)
-else
-  p(43)
-end
+i = 10
+begin
+  p(i)
+  i = i - 1
+end while i > 0
 "))
 end
 
