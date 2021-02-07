@@ -1,18 +1,27 @@
 require './minruby'
 
 def evaluate(tree)
-  if tree[0] == "lit"
+  case tree[0]
+  when "lit"
     return tree[1]
-  end
-
-  # あとの章で消される運命
-  if tree[0] == "func_call"
+  when "stmts"
+    return statements(tree)
+  when "func_call"
+    # あとの章で消される運命
     return p(evaluate(tree[2]))
+  else
+    left = evaluate(tree[1])
+    right = evaluate(tree[2])
+    arithmetic(tree[0], left, right)
   end
+end
 
-  left = evaluate(tree[1])
-  right = evaluate(tree[2])
-  arithmetic(tree[0], left, right)
+def statements(tree)
+  last = nil
+  tree.slice(1..).each { |subtree|
+    last = evaluate(subtree)
+  }
+  last
 end
 
 def arithmetic(op, left, right)
@@ -36,7 +45,7 @@ def arithmetic(op, left, right)
   when "=="
     left == right
   else
-    raise "invalid token: '#{tree[0]}'"
+    raise "invalid token: '#{op}'"
   end
 end
 
