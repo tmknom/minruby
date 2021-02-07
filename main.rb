@@ -23,6 +23,8 @@ class Evaluator
       return tree[1]
     when "stmts"
       return statements(tree.slice(1..))
+    when "if"
+      return if_statement(tree)
     when "var_assign"
       @env[tree[1]] = evaluate!(tree[2])
     when "var_ref"
@@ -34,6 +36,14 @@ class Evaluator
       left = evaluate!(tree[1])
       right = evaluate!(tree[2])
       arithmetic(tree[0], left, right)
+    end
+  end
+
+  def if_statement(tree)
+    if evaluate!(tree[1])
+      evaluate!(tree[2])
+    else
+      evaluate!(tree[3])
     end
   end
 
@@ -112,8 +122,11 @@ main
 
 def test_ast
   pp(minruby_parse("
-x = 1
-y = 2 * 3
+if 0 == 0
+  p(42)
+else
+  p(43)
+end
 "))
 end
 
