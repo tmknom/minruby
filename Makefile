@@ -7,7 +7,7 @@ SHELL=/bin/bash
 # Phony Targets
 
 run: ## Run
-	ruby main.rb
+	ruby main.rb test.rb
 
 # https://postd.cc/auto-documented-makefile/
 help: ## Show help

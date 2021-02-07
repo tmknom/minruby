@@ -5,6 +5,11 @@ def evaluate(tree)
     return tree[1]
   end
 
+  # あとの章で消される運命
+  if tree[0] == "func_call"
+    return p(evaluate(tree[2]))
+  end
+
   left = evaluate(tree[1])
   right = evaluate(tree[2])
   arithmetic(tree[0], left, right)
@@ -52,11 +57,10 @@ end
 
 def main
   # str = gets
-  str = "5 * 12 + 6 / 2"
+  str = minruby_load
   tree = minruby_parse(str)
   p(tree)
-  p(evaluate(tree))
-  p(max_leaf(tree))
+  evaluate(tree)
 end
 
 main
