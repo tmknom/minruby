@@ -30,6 +30,8 @@ class Evaluator
       return ary_ref(tree, lenv)
     when "ary_assign"
       return ary_assign(tree, lenv)
+    when "hash_new"
+      return hash_new(tree, lenv)
     when "stmts"
       return statements(tree.slice(1..), lenv)
     when "if"
@@ -72,6 +74,18 @@ class Evaluator
     idx = evaluate!(tree[2], lenv)
     val = evaluate!(tree[3], lenv)
     ary[idx] = val
+  end
+
+  def hash_new(tree, lenv)
+    hsh = {}
+    i = 0
+    while tree[i + 1]
+      key = evaluate!(tree[i + 1], lenv)
+      val = evaluate!(tree[i + 2], lenv)
+      hsh[key] = val
+      i += 2
+    end
+    hsh
   end
 
   def if_statement(tree, lenv)
@@ -196,8 +210,7 @@ main
 
 def test_ast
   pp(minruby_parse("
-array = [1, 2, 3]
-array[0] = 42
+{ 1 => 10, 2 => 20, 3 => 30 }
 "))
 end
 
