@@ -3,6 +3,10 @@ require './minruby'
 class Evaluator
   def initialize
     @lenv = {}
+    @genv = {
+      "p" => %w[builtin p],
+      "add" => %w[builtin my_add],
+    }
     @profile = {}
   end
 
@@ -34,8 +38,7 @@ class Evaluator
     when "var_ref"
       return @lenv[tree[1]]
     when "func_call"
-      # あとの章で消される運命
-      return p(evaluate!(tree[2]))
+      return func_call(tree)
     else
       left = evaluate!(tree[1])
       right = evaluate!(tree[2])
@@ -69,6 +72,19 @@ class Evaluator
       last = evaluate!(subtree)
     }
     last
+  end
+
+  def func_call(tree)
+    args = []
+    tree.slice(2..).each_with_index { |subtree, i|
+      args[i] = evaluate!(subtree)
+    }
+    mhd = @genv[tree[1]]
+    if mhd[0] == "builtin"
+      minruby_call(mhd[1], args)
+    else
+
+    end
   end
 
   def arithmetic(op, left, right)
@@ -126,6 +142,10 @@ class Evaluator
   end
 end
 
+def my_add(x, y)
+  x + y
+end
+
 def main
   str = minruby_load
   tree = minruby_parse(str)
@@ -138,11 +158,8 @@ main
 
 def test_ast
   pp(minruby_parse("
-i = 10
-begin
-  p(i)
-  i = i - 1
-end while i > 0
+p(1)
+p(1,2)
 "))
 end
 
