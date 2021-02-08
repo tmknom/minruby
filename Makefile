@@ -9,6 +9,9 @@ SHELL=/bin/bash
 run: ## Run
 	ruby main.rb test.rb
 
+fizzbuzz: ## FizzBuzz
+	ruby interp.rb interp.rb test.rb
+
 # https://postd.cc/auto-documented-makefile/
 help: ## Show help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-40s\033[0m %s\n", $$1, $$2}'
