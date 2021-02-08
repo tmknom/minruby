@@ -2,73 +2,136 @@ require './minruby'
 
 class Evaluator
   def initialize
-    @env = {}
+    @genv = {
+      "p" => %w[builtin p],
+      "add" => %w[builtin my_add],
+    }
     @profile = {}
   end
 
   def evaluate(tree)
     begin
-      evaluate!(tree)
+      evaluate!(tree, {})
     rescue => e
       debug(tree)
       raise e
     end
   end
 
-  def evaluate!(tree)
+  def evaluate!(tree, lenv)
     update_profile(tree[0])
 
     case tree[0]
     when "lit"
       return tree[1]
+    when "ary_new"
+      return ary_new(tree, lenv)
+    when "ary_ref"
+      return ary_ref(tree, lenv)
+    when "ary_assign"
+      return ary_assign(tree, lenv)
+    when "hash_new"
+      return hash_new(tree, lenv)
     when "stmts"
-      return statements(tree.slice(1..))
+      return statements(tree.slice(1..), lenv)
     when "if"
-      return if_statement(tree)
+      return if_statement(tree, lenv)
     when "while"
-      return while_statement(tree)
+      return while_statement(tree, lenv)
     when "while2"
-      return begin_while_statement(tree)
+      return begin_while_statement(tree, lenv)
     when "var_assign"
-      @env[tree[1]] = evaluate!(tree[2])
+      lenv[tree[1]] = evaluate!(tree[2], lenv)
     when "var_ref"
-      return @env[tree[1]]
+      return lenv[tree[1]]
+    when "func_def"
+      @genv[tree[1]] = ["user_defined", tree[2], tree[3]]
     when "func_call"
-      # あとの章で消される運命
-      return p(evaluate!(tree[2]))
+      return func_call(tree, lenv)
     else
-      left = evaluate!(tree[1])
-      right = evaluate!(tree[2])
+      left = evaluate!(tree[1], lenv)
+      right = evaluate!(tree[2], lenv)
       arithmetic(tree[0], left, right)
     end
   end
 
-  def if_statement(tree)
-    if evaluate!(tree[1])
-      evaluate!(tree[2])
+  def ary_new(tree, lenv)
+    ary = []
+    tree.slice(1..).each_with_index { |subtree, i|
+      ary[i] = evaluate!(subtree, lenv)
+    }
+    ary
+  end
+
+  def ary_ref(tree, lenv)
+    ary = evaluate!(tree[1], lenv)
+    idx = evaluate!(tree[2], lenv)
+    ary[idx]
+  end
+
+  def ary_assign(tree, lenv)
+    ary = evaluate!(tree[1], lenv)
+    idx = evaluate!(tree[2], lenv)
+    val = evaluate!(tree[3], lenv)
+    ary[idx] = val
+  end
+
+  def hash_new(tree, lenv)
+    hsh = {}
+    i = 0
+    while tree[i + 1]
+      key = evaluate!(tree[i + 1], lenv)
+      val = evaluate!(tree[i + 2], lenv)
+      hsh[key] = val
+      i += 2
+    end
+    hsh
+  end
+
+  def if_statement(tree, lenv)
+    if evaluate!(tree[1], lenv)
+      evaluate!(tree[2], lenv)
     else
-      evaluate!(tree[3])
+      evaluate!(tree[3], lenv)
     end
   end
 
-  def while_statement(tree)
-    while evaluate!(tree[1])
-      evaluate!(tree[2])
+  def while_statement(tree, lenv)
+    while evaluate!(tree[1], lenv)
+      evaluate!(tree[2], lenv)
     end
   end
 
-  def begin_while_statement(tree)
+  def begin_while_statement(tree, lenv)
     begin
-      evaluate!(tree[2])
-    end while evaluate!(tree[1])
+      evaluate!(tree[2], lenv)
+    end while evaluate!(tree[1], lenv)
   end
 
-  def statements(tree)
+  def statements(tree, lenv)
     last = nil
     tree.each { |subtree|
-      last = evaluate!(subtree)
+      last = evaluate!(subtree, lenv)
     }
     last
+  end
+
+  def func_call(tree, lenv)
+    args = []
+    tree.slice(2..).each_with_index { |subtree, i|
+      args[i] = evaluate!(subtree, lenv)
+    }
+    mhd = @genv[tree[1]]
+    if mhd[0] == "builtin"
+      minruby_call(mhd[1], args)
+    else
+      new_lenv = {}
+      params = mhd[1]
+      params.each_with_index { |param, i|
+        new_lenv[param] = args[i]
+      }
+      evaluate!(mhd[2], new_lenv)
+    end
   end
 
   def arithmetic(op, left, right)
@@ -89,6 +152,10 @@ class Evaluator
       left > right
     when "<"
       left < right
+    when ">="
+      left >= right
+    when "<="
+      left <= right
     when "=="
       left == right
     else
@@ -121,9 +188,13 @@ class Evaluator
 
   def debug(tree)
     pp(tree)
-    pp(@env)
+    pp(@genv)
     pp(@profile)
   end
+end
+
+def my_add(x, y)
+  x + y
 end
 
 def main
@@ -132,17 +203,14 @@ def main
 
   evaluator = Evaluator.new
   evaluator.evaluate(tree)
+  # evaluator.debug(tree)
 end
 
 main
 
 def test_ast
   pp(minruby_parse("
-i = 10
-begin
-  p(i)
-  i = i - 1
-end while i > 0
+{ 1 => 10, 2 => 20, 3 => 30 }
 "))
 end
 
