@@ -1,4 +1,4 @@
-require './minruby'
+require('./minruby')
 
 def evaluate(tree, genv, lenv)
   case tree[0]
@@ -26,6 +26,8 @@ def evaluate(tree, genv, lenv)
     evaluate(tree[1], genv, lenv) <= evaluate(tree[2], genv, lenv)
   when "=="
     evaluate(tree[1], genv, lenv) == evaluate(tree[2], genv, lenv)
+  when "!="
+    evaluate(tree[1], genv, lenv) != evaluate(tree[2], genv, lenv)
   when "stmts"
     i = 1
     last = nil
@@ -79,6 +81,7 @@ def evaluate(tree, genv, lenv)
     i = 0
     while tree[i + 1]
       ary[i] = evaluate(tree[i + 1], genv, lenv)
+      i = i + 1
     end
     ary
   when "ary_ref"
@@ -100,16 +103,19 @@ def evaluate(tree, genv, lenv)
       i = i + 2
     end
     hsh
-  else
-    raise "invalid token: '#{op}'"
   end
 end
 
-str = minruby_load
+str = minruby_load()
 tree = minruby_parse(str)
 genv = {
-  "p" => %w[builtin p],
-  "add" => %w[builtin my_add],
+  "p" => ["builtin", "p"],
+  "pp" => ["builtin", "pp"],
+  "require" => ["builtin", "require"],
+  "minruby_load" => ["builtin", "minruby_load"],
+  "minruby_parse" => ["builtin", "minruby_parse"],
+  "minruby_call" => ["builtin", "minruby_call"],
 }
 lenv = {}
+# pp(tree)
 evaluate(tree, genv, lenv)
