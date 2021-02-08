@@ -2,7 +2,7 @@ require './minruby'
 
 class Evaluator
   def initialize
-    @env = {}
+    @lenv = {}
     @profile = {}
   end
 
@@ -30,9 +30,9 @@ class Evaluator
     when "while2"
       return begin_while_statement(tree)
     when "var_assign"
-      @env[tree[1]] = evaluate!(tree[2])
+      @lenv[tree[1]] = evaluate!(tree[2])
     when "var_ref"
-      return @env[tree[1]]
+      return @lenv[tree[1]]
     when "func_call"
       # あとの章で消される運命
       return p(evaluate!(tree[2]))
@@ -121,7 +121,7 @@ class Evaluator
 
   def debug(tree)
     pp(tree)
-    pp(@env)
+    pp(@lenv)
     pp(@profile)
   end
 end
