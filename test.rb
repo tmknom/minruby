@@ -1,2 +1,8 @@
-p(10, 20, 30)
-p(add(3, 5))
+def foo()
+  x = 0
+  p(x)
+end
+
+x = 1
+foo()
+p(x)
