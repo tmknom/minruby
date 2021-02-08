@@ -24,6 +24,12 @@ class Evaluator
     case tree[0]
     when "lit"
       return tree[1]
+    when "ary_new"
+      return ary_new(tree, lenv)
+    when "ary_ref"
+      return ary_ref(tree, lenv)
+    when "ary_assign"
+      return ary_assign(tree, lenv)
     when "stmts"
       return statements(tree.slice(1..), lenv)
     when "if"
@@ -45,6 +51,27 @@ class Evaluator
       right = evaluate!(tree[2], lenv)
       arithmetic(tree[0], left, right)
     end
+  end
+
+  def ary_new(tree, lenv)
+    ary = []
+    tree.slice(1..).each_with_index { |subtree, i|
+      ary[i] = evaluate!(subtree, lenv)
+    }
+    ary
+  end
+
+  def ary_ref(tree, lenv)
+    ary = evaluate!(tree[1], lenv)
+    idx = evaluate!(tree[2], lenv)
+    ary[idx]
+  end
+
+  def ary_assign(tree, lenv)
+    ary = evaluate!(tree[1], lenv)
+    idx = evaluate!(tree[2], lenv)
+    val = evaluate!(tree[3], lenv)
+    ary[idx] = val
   end
 
   def if_statement(tree, lenv)
@@ -147,7 +174,6 @@ class Evaluator
 
   def debug(tree)
     pp(tree)
-    pp(@lenv)
     pp(@genv)
     pp(@profile)
   end
@@ -170,9 +196,8 @@ main
 
 def test_ast
   pp(minruby_parse("
-def add(x, y)
-  x + y
-end
+array = [1, 2, 3]
+array[0] = 42
 "))
 end
 
