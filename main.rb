@@ -111,6 +111,10 @@ class Evaluator
       left > right
     when "<"
       left < right
+    when ">="
+      left >= right
+    when "<="
+      left <= right
     when "=="
       left == right
     else
